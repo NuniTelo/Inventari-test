@@ -4,9 +4,12 @@ import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
+
 import com.inventar.nuni.inventari.R;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
@@ -20,7 +23,8 @@ public class ShitjeTab extends android.support.v4.app.Fragment {
     ArrayList<String>id,njesi,sasi,data;
     private String id_rreshtit;
     ArrayList<String>input_id,input_njesi,input_sasi,input_data;
-
+    private boolean loading = true;
+    int pastVisiblesItems, visibleItemCount, totalItemCount;
 
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -38,15 +42,39 @@ public class ShitjeTab extends android.support.v4.app.Fragment {
             recyclerView.setHasFixedSize(true);
             //linear-layout
             man = new LinearLayoutManager(getActivity());
-            mLayoutManager = new LinearLayoutManager(getActivity());
-            recyclerView.setLayoutManager(mLayoutManager);
+           // mLayoutManager = new LinearLayoutManager(getActivity());
+            recyclerView.setLayoutManager(man);
 
 
             //merr info nga databaza
             ArtikujDatabaze mydb = new ArtikujDatabaze(getActivity());
             mydb.delete();
-            shkarko_artikuj();
+           // shkarko_artikuj();
             merr_shitje(id_rreshtit);
+            recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener()
+            {
+                @Override
+                public void onScrolled(RecyclerView recyclerView, int dx, int dy)
+                {
+                    if(dy > 0) //check for scroll down
+                    {
+                        visibleItemCount = man.getChildCount();
+                        totalItemCount = man.getItemCount();
+                        pastVisiblesItems = man.findFirstVisibleItemPosition();
+
+                        if (loading)
+                        {
+                            if ( (visibleItemCount + pastVisiblesItems) >= totalItemCount)
+                            {
+                                loading = false;
+                                Log.v("...", "E FUNDIT!");
+
+                                merr_shitje(id_rreshtit);
+                            }
+                        }
+                    }
+                }
+            });
 
             //adapteri i recycleview
             mAdapter = new ShitjeAdapter(input_id, input_njesi, getActivity(), input_sasi, input_data);
@@ -54,6 +82,7 @@ public class ShitjeTab extends android.support.v4.app.Fragment {
 
             return rootView;
         }
+
 
         public void shkarko_artikuj(){
             String url_kerkuar ="https://dl.dropboxusercontent.com/s/q8j6mdrsnx51gcm/artikulli.txt?dl=0";
@@ -87,11 +116,15 @@ public class ShitjeTab extends android.support.v4.app.Fragment {
                 } catch (NullPointerException e) {
                     e.printStackTrace();
                 }
+
+                mydb.close();
             }
 
             public void merr_shitje(String id_rresht){
+                ArtikujDatabaze mydb = new ArtikujDatabaze(getActivity());
+                mydb.delete();
+                shkarko_artikuj();
 
-               ArtikujDatabaze mydb = new ArtikujDatabaze(getActivity());
                 Cursor rezultat = mydb.merr_artikuj_shitje(id_rresht);
                 input_id = new ArrayList<>();
                 input_njesi= new ArrayList<>();

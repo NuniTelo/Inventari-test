@@ -41,7 +41,7 @@ public class ShitjeAdapter extends RecyclerView.Adapter<ShitjeAdapter.ViewHolder
         this.njesi=njesi;
         this.sasi=sasi;
         this.data=data;
-        
+
         this.context=context;
 
     }
